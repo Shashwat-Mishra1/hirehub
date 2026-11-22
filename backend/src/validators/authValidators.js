@@ -10,4 +10,8 @@ exports.registerRules = [
   body('role')
     .optional()
     .isIn(['candidate', 'recruiter']).withMessage('Role must be candidate or recruiter'),
+]
+exports.loginRules = [
+  body('email').trim().isEmail().withMessage('Enter a valid email').normalizeEmail(),
+  body('password').notEmpty().withMessage('Password is required'),
 ];
