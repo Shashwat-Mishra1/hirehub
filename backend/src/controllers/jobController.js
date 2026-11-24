@@ -12,10 +12,7 @@ const pick = (obj, keys) =>
 const canManage = (job, user) =>
   user.role === 'admin' || String(job.postedBy) === String(user._id);
 
-const serverError = (res, err) => {
-  console.error(err);
-  res.status(500).json({ success: false, message: 'Server error' });
-};
+const { sendError: serverError } = require('../middlewares/error');
 
 // GET /api/v1/jobs  (public)
 // ?search=&type=&location=&category=&skills=react,node&minSalary=&maxExp=&sort=&page=&limit=

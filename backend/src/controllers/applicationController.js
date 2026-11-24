@@ -5,10 +5,7 @@ const Application = require('../models/Application');
 const { parsePagination } = require('../utils/apiFeatures');
 const { RESUME_DIR, removeFile } = require('../middlewares/upload');
 
-const serverError = (res, err) => {
-  console.error(err);
-  res.status(500).json({ success: false, message: 'Server error' });
-};
+const { sendError: serverError } = require('../middlewares/error');
 
 const paginate = (page, limit, total) => ({ page, limit, total, pages: Math.ceil(total / limit) || 1 });
 
