@@ -10,6 +10,8 @@ const authRoutes = require('./routes/authRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
 
+const dashboardRoutes = require('./routes/dashboardRoutes');
+
 const app = express();
 
 app.set('trust proxy', 1);                                   // needed behind AWS/Nginx for correct IPs
@@ -35,6 +37,7 @@ app.get('/', (req, res) => res.send('Job Portal API is running'));
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/jobs', jobRoutes);
 app.use('/api/v1', applicationRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 
 app.use(notFound);        // must come AFTER all routes
 app.use(errorHandler);    // must be the LAST middleware
