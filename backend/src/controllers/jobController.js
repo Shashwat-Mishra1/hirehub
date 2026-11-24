@@ -1,4 +1,5 @@
 const Job = require('../models/Job');
+const { parsePagination, parseSort, escapeRegex } = require('../utils/apiFeatures');
 
 const EDITABLE = ['title', 'description', 'company', 'location', 'type', 'category',
                   'skills', 'experienceMin', 'salaryMin', 'salaryMax', 'deadline', 'status'];
@@ -16,11 +17,43 @@ const serverError = (res, err) => {
   res.status(500).json({ success: false, message: 'Server error' });
 };
 
-// GET /api/v1/jobs  (public) - Lesson 7 adds search and pagination
+// GET /api/v1/jobs  (public)
+// ?search=&type=&location=&category=&skills=react,node&minSalary=&maxExp=&sort=&page=&limit=
 exports.getJobs = async (req, res) => {
   try {
-    const jobs = await Job.find({ status: 'open' }).sort('-createdAt').populate('postedBy', 'name company');
-    res.json({ success: true, count: jobs.length, data: jobs });
+    const q = req.query;
+    const { page, limit, skip } = parsePagination(q);
+
+    const filter = { status: 'open' };
+
+    if (q.search) {
+      const rx = new RegExp(escapeRegex(q.search), 'i');           // 'i' = ignore upper/lower case
+      filter.$or = [{ title: rx }, { company: rx }, { description: rx }, { skills: rx }];
+    }
+    if (q.type) filter.type = { $in: String(q.type).split(',') };   // type=internship,remote
+    if (q.location) filter.location = new RegExp(escapeRegex(q.location), 'i');
+    if (q.category) filter.category = new RegExp(`^${escapeRegex(q.category)}$`, 'i');
+    if (q.skills) {
+      filter.skills = {
+        $in: String(q.skills).split(',').map((s) => new RegExp(`^${escapeRegex(s.trim())}$`, 'i')),
+      };
+    }
+    if (q.minSalary) filter.salaryMax = { $gte: Number(q.minSalary) || 0 };
+    if (q.maxExp) filter.experienceMin = { $lte: Number(q.maxExp) || 0 };
+
+    const sort = parseSort(q.sort, ['createdAt', 'title', 'salaryMax']);
+
+    // run both queries at the same time
+    const [jobs, total] = await Promise.all([
+      Job.find(filter).sort(sort).skip(skip).limit(limit).populate('postedBy', 'name company'),
+      Job.countDocuments(filter),
+    ]);
+
+    res.json({
+      success: true,
+      data: jobs,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) || 1 },
+    });
   } catch (err) { serverError(res, err); }
 };
 
