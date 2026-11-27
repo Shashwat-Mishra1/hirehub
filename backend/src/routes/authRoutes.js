@@ -9,6 +9,7 @@ const { protect } = require('../middlewares/auth');
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
+  skip: () => process.env.NODE_ENV === 'test', 
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many attempts, please try again later' },
